@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+  <meta name="theme-color" content="#05060f" />
+  <title>SuperSnake 3000</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' x2='1' y1='0' y2='1'%3E%3Cstop offset='0' stop-color='%2319f2d0'/%3E%3Cstop offset='1' stop-color='%23d84dff'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M14 44c0-10 12-10 18-16s4-14-6-14' fill='none' stroke='url(%23g)' stroke-width='9' stroke-linecap='round'/%3E%3Ccircle cx='46' cy='44' r='6' fill='%23ff5fb8'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/ui/style.css" />
+</head>
+<body>
+  <canvas id="scene" aria-label="SuperSnake 3000 game view"></canvas>
+
+  <div id="ui">
+    <!-- In-game HUD -->
+    <div id="hud" class="hidden" aria-live="polite">
+      <div class="hud-score">
+        <span class="hud-label">Score</span>
+        <span id="score" class="mono">0</span>
+        <span id="combo" class="combo hidden">×<b>2</b><i class="combo-bar"><i id="combo-fill"></i></i></span>
+      </div>
+      <div class="hud-stats">
+        <div><span class="hud-label">Best</span><span id="hud-best" class="mono">0</span></div>
+        <div><span class="hud-label">Length</span><span id="hud-len" class="mono">4</span></div>
+      </div>
+      <div id="alt" class="alt" aria-hidden="true">
+        <span class="alt-label">ALT</span>
+        <div class="alt-track"><i id="alt-food"></i><i id="alt-bonus" class="hidden"></i><i id="alt-head"></i></div>
+      </div>
+      <div id="ready" class="ready">Ready</div>
+      <div id="popups"></div>
+      <div id="hint" class="hint">
+        <span><kbd>←</kbd><kbd>→</kbd> turn</span>
+        <span><kbd>↑</kbd> climb</span>
+        <span><kbd>↓</kbd> dive</span>
+        <span><kbd>Esc</kbd> pause</span>
+      </div>
+    </div>
+
+    <div id="food-arrow" class="food-arrow hidden" aria-hidden="true"></div>
+
+    <!-- Title -->
+    <section id="title" class="screen title">
+      <div class="title-block">
+        <p class="kicker">A serpent in three dimensions</p>
+        <h1 class="logo"><span class="logo-main">SuperSnake</span><span class="logo-num">3000</span></h1>
+        <button id="play" class="btn btn-primary" autofocus>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg>
+          Play
+          <span class="btn-hint">Space</span>
+        </button>
+        <p class="best-line">Best <b id="title-best" class="mono">0</b></p>
+
+        <div class="guide">
+          <div class="guide-row"><span class="keys"><kbd>←</kbd><kbd>→</kbd></span><span>Turn left / right</span></div>
+          <div class="guide-row"><span class="keys"><kbd>↑</kbd><kbd>↓</kbd></span><span>Climb / dive — press again to level out</span></div>
+          <div class="guide-row"><span class="keys"><kbd>Esc</kbd></span><span>Pause</span></div>
+          <p class="guide-tip">The glass walls are your radar: they show where <em class="t-teal">you</em> and the <em class="t-pink">orb</em> line up. Walls flash <em class="t-red">red</em> before you hit them.</p>
+        </div>
+      </div>
+      <div class="settings" id="settings-title"></div>
+    </section>
+
+    <!-- Pause -->
+    <section id="pause" class="screen center hidden">
+      <div class="card">
+        <p class="kicker">Paused</p>
+        <h2 class="card-title">Take a breath</h2>
+        <div class="btn-col">
+          <button class="btn btn-primary" data-act="resume">Resume <span class="btn-hint">Esc</span></button>
+          <button class="btn" data-act="restart">Restart <span class="btn-hint">R</span></button>
+          <button class="btn" data-act="menu">Main menu <span class="btn-hint">Q</span></button>
+        </div>
+        <div class="settings" id="settings-pause"></div>
+      </div>
+    </section>
+
+    <!-- Game over -->
+    <section id="over" class="screen center hidden">
+      <div class="card">
+        <p class="kicker" id="over-cause">Game over</p>
+        <div class="final">
+          <span class="hud-label">Score</span>
+          <span id="final-score" class="mono final-score">0</span>
+          <span id="new-best" class="badge hidden">New best</span>
+        </div>
+        <div class="stats">
+          <div><span class="hud-label">Length</span><b id="final-len" class="mono">0</b></div>
+          <div><span class="hud-label">Orbs</span><b id="final-orbs" class="mono">0</b></div>
+          <div><span class="hud-label">Best</span><b id="final-best" class="mono">0</b></div>
+        </div>
+        <div class="btn-col">
+          <button class="btn btn-primary" data-act="restart">Play again <span class="btn-hint">Space</span></button>
+          <button class="btn" data-act="menu">Main menu <span class="btn-hint">Q</span></button>
+        </div>
+      </div>
+    </section>
+
+    <div id="fps" class="fps hidden mono"></div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
